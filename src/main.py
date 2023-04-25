@@ -1,15 +1,14 @@
 """
-A simple Pong game implemented using Pygame.
+A simple Tennis game implemented using Pygame.
 
 Controls:
-- Player 1: Up and Down arrow keys to move up and down.
-- Player 2: Computer
+- Player 1: Left and Right arrow keys to move left and right.
 
 Scoring:
-- A player scores a point if the ball goes past the opposing paddle.
+- A player scores a point if the ball hits the paddle.
 
 End Game:
-- The game ends when one player reaches a score of 3.
+- The game ends when if the ball hits the bottom edge of the screen.
 
 Classes:
 - Paddle: Represents a paddle object.
@@ -34,15 +33,16 @@ Date Created:
 import pygame
 
 from ball import Ball
+from obstacle import Obstacle
 from paddle import Paddle
 
 # Define game constants
 WIDTH = 800
 HEIGHT = 600
 BALL_RADIUS = 10
-PADDLE_WIDTH = 10
-PADDLE_HEIGHT = 100
-PADDLE_SPEED = 5
+PADDLE_WIDTH = 100
+PADDLE_HEIGHT = 10
+PADDLE_SPEED = 10
 BALL_SPEED = 5
 FRAMERATE = 60
 
@@ -56,71 +56,72 @@ pygame.init()
 # Define Game class
 class Game:
     def __init__(self) -> None:
-        self.WINNING_SCORE = 3
         self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
         self.clock = pygame.time.Clock()
         self.ball = Ball((WIDTH/2, HEIGHT/2), BALL_SPEED, BALL_RADIUS)
-        self.player_paddle = Paddle((0, HEIGHT), (PADDLE_WIDTH, PADDLE_HEIGHT), PADDLE_SPEED)
-        self.computer_paddle = Paddle(((WIDTH - PADDLE_WIDTH), HEIGHT), (PADDLE_WIDTH, PADDLE_HEIGHT), PADDLE_SPEED, False)
-        self.score = [0, 0]
+        self.player_paddle = Paddle((WIDTH, HEIGHT - 30), (PADDLE_WIDTH, PADDLE_HEIGHT), PADDLE_SPEED)
+        self.score = 0
+        self.obstacles = [Obstacle([WIDTH/2, HEIGHT/3], [50, 50]), Obstacle([WIDTH/3, HEIGHT/3], [50, 75])]
 
     def handle_events(self) -> None:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.quit()
             elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_UP:
+                if event.key == pygame.K_LEFT:
                     self.player_paddle.velocity = -PADDLE_SPEED
-                elif event.key == pygame.K_DOWN:
+                elif event.key == pygame.K_RIGHT:
                     self.player_paddle.velocity = PADDLE_SPEED
             elif event.type == pygame.KEYUP:
-                if event.key == pygame.K_UP or event.key == pygame.K_DOWN:
+                if event.key in (pygame.K_LEFT, pygame.K_RIGHT):
                     self.player_paddle.velocity = 0
 
     def detect_collisions(self) -> None:
         # Detect collision between ball and player paddle
-        if self.ball.position[0] - BALL_RADIUS <= self.player_paddle.position[0] + PADDLE_WIDTH \
-                and self.player_paddle.position[1] <= self.ball.position[1] <= self.player_paddle.position[1] + PADDLE_HEIGHT:
-            self.ball.velocity[0] = BALL_SPEED
-        # Detect collision between ball and computer paddle
-        elif self.ball.position[0] + BALL_RADIUS >= self.computer_paddle.position[0] \
-                and self.computer_paddle.position[1] <= self.ball.position[1] <= self.computer_paddle.position[1] + PADDLE_HEIGHT:
-            self.ball.velocity[0] = -BALL_SPEED
-        # Detect collision between ball and top or bottom edge of screen
-        if self.ball.position[1] - BALL_RADIUS <= 0 or self.ball.position[1] + BALL_RADIUS >= HEIGHT:
+        if self.ball.position[1] + BALL_RADIUS >= self.player_paddle.position[1]\
+           and self.player_paddle.position[0] <= self.ball.position[0] <= self.player_paddle.position[0] + PADDLE_WIDTH:
+            self.score += 1
             self.ball.velocity[1] = -self.ball.velocity[1]
+
+        # Detect collision between ball and top edge of screen
+        if self.ball.position[1] - BALL_RADIUS <= 0:
+            self.ball.velocity[1] = -self.ball.velocity[1]
+
+        # Detect collision between ball and left or right edge of screen
+        if (self.ball.position[0] - BALL_RADIUS <= 0) or \
+           (self.ball.position[0] + BALL_RADIUS >= WIDTH):
+            self.ball.velocity[0] = -self.ball.velocity[0]
+
         # Detect collision between player paddle and top or bottom edge of screen
         if self.player_paddle.position[1] <= 0:
             self.player_paddle.position[1] = 0
         elif self.player_paddle.position[1] + PADDLE_HEIGHT >= HEIGHT:
             self.player_paddle.position[1] = HEIGHT - PADDLE_HEIGHT
-        # Detect collision between computer paddle and top or bottom edge of screen
-        if self.computer_paddle.position[1] <= 0:
-            self.computer_paddle.position[1] = 0
-        elif self.computer_paddle.position[1] + PADDLE_HEIGHT >= HEIGHT:
-            self.computer_paddle.position[1] = HEIGHT - PADDLE_HEIGHT
 
-    def update_score(self) -> None:
-        # Check if ball goes out of bounds on player side
-        if self.ball.position[0] + BALL_RADIUS >= WIDTH:
-            self.score[0] += 1
-            self.ball.__init__((WIDTH/2, HEIGHT/2), BALL_SPEED, BALL_RADIUS)
-        # Check if ball goes out of bounds on computer side
-        elif self.ball.position[0] - BALL_RADIUS <= 0:
-            self.score[1] += 1
-            self.ball.__init__((WIDTH/2, HEIGHT/2), BALL_SPEED, BALL_RADIUS)
+        if self.player_paddle.position[0] <= 0:
+            self.player_paddle.position[0] = 0
+        elif self.player_paddle.position[0] + PADDLE_WIDTH >= WIDTH:
+            self.player_paddle.position[0] = WIDTH - PADDLE_WIDTH
 
-        if self.score[0] >= self.WINNING_SCORE:
-            self.show_end_screen("Player wins!")
-        elif self.score[1] >= self.WINNING_SCORE:
-            self.show_end_screen("Computer wins!")
+        # Check if ball goes out of bounds
+        if self.ball.position[1] + BALL_RADIUS >= HEIGHT:
+            self.show_end_screen("Game over.")
+            # self.ball.__init__((WIDTH/2, HEIGHT/2), BALL_SPEED, BALL_RADIUS)
+
+        # Check if ball collides with any obstacle - Based on the AABB collision-test
+        for obstacle in self.obstacles:
+            if (self.ball.position[0] + self.ball.radius >= obstacle.position[0] and \
+                obstacle.position[0] + obstacle.size[0] >= self.ball.position[0] and \
+                self.ball.position[1] + self.ball.radius >= obstacle.position[1] and \
+                obstacle.position[1] + obstacle.size[1] >= self.ball.position[1]):
+                self.ball.velocity[0] = -self.ball.velocity[0]
+                # self.ball.velocity[1] = -self.ball.velocity[1]
+
 
     def draw_score(self) -> None:
         font = pygame.font.Font(None, 36)
-        player_score = font.render(str(self.score[0]), True, WHITE)
-        computer_score = font.render(str(self.score[1]), True, WHITE)
-        self.screen.blit(player_score, (WIDTH/4, 10))
-        self.screen.blit(computer_score, (3*WIDTH/4, 10))
+        player_score = font.render(str(self.score), True, WHITE)
+        self.screen.blit(player_score, (WIDTH/2, 15))
 
     def quit(self) -> None:
         pygame.quit()
@@ -128,19 +129,23 @@ class Game:
 
     def show_end_screen(self, message):
         font = pygame.font.Font(None, 36)
+
         text = font.render(message, True, WHITE)
         text_rect = text.get_rect(center=(WIDTH/2, HEIGHT/2))
+
+        score = font.render(f"Score: {self.score}", True, WHITE)
+        score_rect = score.get_rect(center=(WIDTH/2, (HEIGHT/2) + 36))
+
         self.screen.blit(text, text_rect)
+        self.screen.blit(score, score_rect)
         pygame.display.update()
         pygame.time.wait(3000) # Display the screen for 3 seconds
         self.quit()
-
 
     def run(self) -> None:
         while True:
             self.handle_events()
             self.detect_collisions()
-            self.update_score()
 
             self.screen.fill(BLACK)
 
@@ -150,8 +155,8 @@ class Game:
             self.player_paddle.move(self.ball)
             self.player_paddle.draw(self.screen, WHITE)
 
-            self.computer_paddle.move(self.ball)
-            self.computer_paddle.draw(self.screen, WHITE)
+            for obstacle in self.obstacles:
+                obstacle.draw(self.screen, WHITE)
 
             self.draw_score()
 

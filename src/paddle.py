@@ -66,7 +66,8 @@ class Paddle:
         - player : bool, optional
             A boolean value indicating whether the paddle is controlled by a player or the computer. Defaults to True.
         """
-        self.position = [position[0], position[1]/2 - size[1]/2]
+        # self.position = [position[0], position[1]/2 - size[1]/2]
+        self.position = [position[0]/2 - size[0]/2, position[1]]
         self.size = size
         self.speed = speed
         self.velocity = 0
@@ -88,7 +89,7 @@ class Paddle:
                 self.velocity = self.speed
             else:
                 self.velocity = 0
-        self.position[1] += self.velocity
+        self.position[0] += self.velocity
 
     def draw(self, surface, colour: tuple[int, int, int]) -> None:
         """
