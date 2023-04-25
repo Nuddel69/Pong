@@ -1,3 +1,36 @@
+"""
+A simple Pong game implemented using Pygame.
+
+Controls:
+- Player 1: Up and Down arrow keys to move up and down.
+- Player 2: Computer
+
+Scoring:
+- A player scores a point if the ball goes past the opposing paddle.
+
+End Game:
+- The game ends when one player reaches a score of 3.
+
+Classes:
+- Paddle: Represents a paddle object.
+- Ball: Represents the ball object.
+- Game: Represents the game object and runs the game loop.
+
+Global Constants:
+- WIDTH: An integer representing the width of the game screen.
+- HEIGHT: An integer representing the height of the game screen.
+- FRAMERATE: An integer representing the frame rate of the game.
+
+Usage:
+- Run the script to start the game.
+
+Authors:
+- Mats Bjønnes
+
+Date Created:
+- 25 april 2023
+"""
+
 import pygame
 
 from ball import Ball
