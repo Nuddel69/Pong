@@ -26,7 +26,7 @@ class Game:
         self.WINNING_SCORE = 3
         self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
         self.clock = pygame.time.Clock()
-        self.ball = Ball(WIDTH/2, HEIGHT/2, BALL_SPEED, BALL_RADIUS)
+        self.ball = Ball((WIDTH/2, HEIGHT/2), BALL_SPEED, BALL_RADIUS)
         self.player_paddle = Paddle((0, HEIGHT), (PADDLE_WIDTH, PADDLE_HEIGHT), PADDLE_SPEED)
         self.computer_paddle = Paddle(((WIDTH - PADDLE_WIDTH), HEIGHT), (PADDLE_WIDTH, PADDLE_HEIGHT), PADDLE_SPEED, False)
         self.score = [0, 0]
@@ -71,11 +71,11 @@ class Game:
         # Check if ball goes out of bounds on player side
         if self.ball.position[0] + BALL_RADIUS >= WIDTH:
             self.score[0] += 1
-            self.ball.__init__(WIDTH/2, HEIGHT/2, BALL_SPEED, BALL_RADIUS)
+            self.ball.__init__((WIDTH/2, HEIGHT/2), BALL_SPEED, BALL_RADIUS)
         # Check if ball goes out of bounds on computer side
         elif self.ball.position[0] - BALL_RADIUS <= 0:
             self.score[1] += 1
-            self.ball.__init__(WIDTH/2, HEIGHT/2, BALL_SPEED, BALL_RADIUS)
+            self.ball.__init__((WIDTH/2, HEIGHT/2), BALL_SPEED, BALL_RADIUS)
 
         if self.score[0] >= self.WINNING_SCORE:
             self.show_end_screen("Player wins!")
